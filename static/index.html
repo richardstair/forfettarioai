@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForfettarioAI Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>ForfettarioAI</h1>
+            <div class="header-controls">
+                <button id="theme-toggle" class="theme-toggle" aria-label="Cambia tema">
+                    <svg class="moon-icon" viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="messages" id="messages">
+            <div class="welcome-message">
+                <h2>Benvenuto in ForfettarioAI</h2>
+                <p>Il tuo assistente personale per la gestione del regime forfettario.</p>
+            </div>
+        </div>
+        <div class="input-container">
+            <div class="input-wrapper">
+                <textarea 
+                    id="message-input" 
+                    placeholder="Scrivi un messaggio..."
+                    rows="1"
+                    autofocus></textarea>
+                <button id="send-button" class="send-button" aria-label="Invia messaggio">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M22 2L11 13"></path>
+                        <path d="M22 2L15 22L11 13L2 9L22 2z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
