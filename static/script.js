@@ -1,71 +1,111 @@
-// Gestione del tema
-const themeToggle = document.getElementById('theme-toggle');
-const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-
-// Imposta il tema iniziale
-function setInitialTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-        document.documentElement.setAttribute('data-theme', savedTheme);
-    } else if (prefersDarkScheme.matches) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-    }
-}
-
-setInitialTheme();
-
-themeToggle.addEventListener('click', () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-});
-
-// Gestione della chat
+// DOM Elements
 const messagesContainer = document.getElementById('messages');
 const messageInput = document.getElementById('message-input');
 const sendButton = document.getElementById('send-button');
+const themeToggle = document.getElementById('theme-toggle');
+const userMessageTemplate = document.getElementById('user-message-template');
+const assistantMessageTemplate = document.getElementById('assistant-message-template');
+const typingIndicatorTemplate = document.getElementById('typing-indicator-template');
 
+// Conversation history
 let conversationHistory = [];
 
-// Auto-resize del campo di input
-messageInput.addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = (this.scrollHeight) + 'px';
-    this.style.height = Math.min(this.scrollHeight, 150) + 'px';
-});
-
-// Funzione per aggiungere un messaggio alla chat
-function addMessage(content, role) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${role}`;
-    messageDiv.textContent = content;
-    messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+// Theme management
+function initializeTheme() {
+    // Check for saved theme preference or use system preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    // Aggiorna la cronologia della conversazione
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+}
+
+function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    
+    // Add subtle animation
+    document.body.classList.add('dark-mode-transition');
+    setTimeout(() => {
+        document.body.classList.remove('dark-mode-transition');
+    }, 300);
+}
+
+// Auto-resize textarea
+function autoResizeTextarea() {
+    messageInput.style.height = 'auto';
+    messageInput.style.height = Math.min(messageInput.scrollHeight, 200) + 'px';
+}
+
+// Add message to chat
+function addMessage(content, role) {
+    // Select the appropriate template
+    const template = role === 'user' 
+        ? userMessageTemplate 
+        : assistantMessageTemplate;
+    
+    // Clone the template
+    const messageElement = template.content.cloneNode(true);
+    
+    // Set the message content
+    const messageContent = messageElement.querySelector('.message-content');
+    messageContent.textContent = content;
+    
+    // Add to the messages container
+    messagesContainer.appendChild(messageElement);
+    
+    // Scroll to the bottom
+    scrollToBottom();
+    
+    // Update conversation history
     conversationHistory.push({ role, content });
 }
 
-// Funzione per inviare un messaggio
+// Show typing indicator
+function showTypingIndicator() {
+    const indicator = typingIndicatorTemplate.content.cloneNode(true);
+    indicator.querySelector('.typing-indicator').id = 'typing-indicator';
+    messagesContainer.appendChild(indicator);
+    scrollToBottom();
+}
+
+// Remove typing indicator
+function removeTypingIndicator() {
+    const indicator = document.getElementById('typing-indicator');
+    if (indicator) {
+        indicator.parentElement.parentElement.remove();
+    }
+}
+
+// Scroll to bottom of messages
+function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Send message to API
 async function sendMessage() {
     const content = messageInput.value.trim();
     if (!content) return;
-
-    // Aggiungi il messaggio dell'utente
+    
+    // Add user message to chat
     addMessage(content, 'user');
+    
+    // Clear input and reset height
     messageInput.value = '';
     messageInput.style.height = 'auto';
-
-    // Disabilita l'input durante l'elaborazione
+    
+    // Disable input during processing
     messageInput.disabled = true;
     sendButton.disabled = true;
-
+    
+    // Show typing indicator
+    showTypingIndicator();
+    
     try {
-        console.log('Invio richiesta al server:', {
-            messages: conversationHistory
-        });
-
+        // Send request to API
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
@@ -75,51 +115,118 @@ async function sendMessage() {
                 messages: conversationHistory
             })
         });
-
-        console.log('Risposta ricevuta:', response);
-
-        if (!response.ok) {
-            const errorData = await response.text();
-            console.error('Errore dal server:', errorData);
-            throw new Error(`Errore del server: ${response.status} - ${errorData}`);
-        }
-
-        const data = await response.json();
-        console.log('Dati ricevuti:', data);
         
-        if (!data.response) {
-            throw new Error('Risposta del server non valida');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Error ${response.status}: ${errorText}`);
         }
-
-        // Aggiungi la risposta dell'assistente
-        addMessage(data.response, 'assistant');
-
+        
+        const data = await response.json();
+        
+        // Remove typing indicator
+        removeTypingIndicator();
+        
+        // Add assistant response with typing effect
+        if (data.response) {
+            addMessageWithTypingEffect(data.response, 'assistant');
+        } else {
+            throw new Error('Empty response from server');
+        }
+        
     } catch (error) {
-        console.error('Errore dettagliato:', error);
-        addMessage(`Errore: ${error.message}`, 'assistant error');
+        console.error('Error:', error);
+        removeTypingIndicator();
+        
+        // Add error message
+        const errorMessage = 'Mi dispiace, si è verificato un errore. Riprova più tardi.';
+        addMessage(errorMessage, 'assistant');
+        
     } finally {
-        // Riabilita l'input
+        // Re-enable input
         messageInput.disabled = false;
         sendButton.disabled = false;
         messageInput.focus();
     }
 }
 
-// Event listeners per l'invio dei messaggi
-sendButton.addEventListener('click', sendMessage);
-
-messageInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
+// Add message with typing effect
+function addMessageWithTypingEffect(text, role) {
+    // Select the appropriate template
+    const template = role === 'user' 
+        ? userMessageTemplate 
+        : assistantMessageTemplate;
+    
+    // Clone the template
+    const messageElement = template.content.cloneNode(true);
+    
+    // Get the message content element
+    const messageContent = messageElement.querySelector('.message-content');
+    messageContent.textContent = '';
+    
+    // Add to the messages container
+    messagesContainer.appendChild(messageElement);
+    
+    // Update conversation history immediately
+    conversationHistory.push({ role, content: text });
+    
+    // Scroll to the bottom
+    scrollToBottom();
+    
+    // Typing effect
+    let i = 0;
+    const typingSpeed = 10; // ms per character
+    
+    function typeNextChar() {
+        if (i < text.length) {
+            messageContent.textContent += text.charAt(i);
+            i++;
+            scrollToBottom();
+            setTimeout(typeNextChar, typingSpeed);
+        }
     }
-});
-
-// Funzione per gestire il ridimensionamento della finestra
-function handleResize() {
-    const vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    
+    // Start typing effect
+    typeNextChar();
 }
 
-window.addEventListener('resize', handleResize);
-handleResize();
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize theme
+    initializeTheme();
+    
+    // Theme toggle
+    themeToggle.addEventListener('click', toggleTheme);
+    
+    // Auto-resize textarea
+    messageInput.addEventListener('input', autoResizeTextarea);
+    
+    // Send message on button click
+    sendButton.addEventListener('click', sendMessage);
+    
+    // Send message on Enter (but not with Shift+Enter)
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Focus input on page load
+    messageInput.focus();
+});
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    // Update any responsive elements if needed
+});
+
+// Add subtle hover effects to buttons
+document.querySelectorAll('button').forEach(button => {
+    button.addEventListener('mouseenter', () => {
+        button.style.transform = 'translateY(-1px)';
+    });
+    
+    button.addEventListener('mouseleave', () => {
+        button.style.transform = 'translateY(0)';
+    });
+});
