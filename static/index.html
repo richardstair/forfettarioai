@@ -3,44 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ForfettarioAI Chat</title>
+    <title>ForfettarioAI</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f5ff',
+                            100: '#e0eaff',
+                            200: '#c7d9ff',
+                            300: '#a4beff',
+                            400: '#7a96ff',
+                            500: '#5e72f5',
+                            600: '#4f54e8',
+                            700: '#4042cf',
+                            800: '#3638a6',
+                            900: '#303483',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom styles -->
     <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h1>ForfettarioAI</h1>
-            <div class="header-controls">
-                <button id="theme-toggle" class="theme-toggle" aria-label="Cambia tema">
-                    <svg class="moon-icon" viewBox="0 0 24 24" width="24" height="24">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+<body class="bg-gray-50 dark:bg-gray-900 text-black dark:text-white transition-colors duration-300">
+    <div class="chat-container max-w-4xl mx-auto h-screen flex flex-col">
+        <!-- Header -->
+        <header class="py-4 px-6 bg-white dark:bg-gray-800 shadow-sm z-10 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <h1 class="text-xl font-semibold bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">ForfettarioAI</h1>
+            </div>
+            <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <!-- Sun icon for dark mode -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <!-- Moon icon for light mode -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 block dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Messages area -->
+        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
+            <!-- Welcome message -->
+            <div class="welcome-message bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm max-w-2xl mx-auto text-center">
+                <div class="mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-primary-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
-                </button>
+                </div>
+                <h2 class="text-xl font-semibold mb-2 bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">Benvenuto in ForfettarioAI</h2>
+                <p class="text-gray-600 dark:text-gray-300">Il tuo assistente personale per la gestione del regime forfettario.</p>
             </div>
         </div>
-        <div class="messages" id="messages">
-            <div class="welcome-message">
-                <h2>Benvenuto in ForfettarioAI</h2>
-                <p>Il tuo assistente personale per la gestione del regime forfettario.</p>
-            </div>
-        </div>
-        <div class="input-container">
-            <div class="input-wrapper">
+
+        <!-- Input area -->
+        <div class="input-container p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+            <div class="input-wrapper flex items-end gap-2 bg-gray-100 dark:bg-gray-700 rounded-2xl p-3">
                 <textarea 
                     id="message-input" 
+                    class="flex-1 bg-transparent resize-none outline-none min-h-[44px] max-h-[200px] py-2 px-3 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                     placeholder="Scrivi un messaggio..."
                     rows="1"
                     autofocus></textarea>
-                <button id="send-button" class="send-button" aria-label="Invia messaggio">
-                    <svg viewBox="0 0 24 24" width="24" height="24">
-                        <path d="M22 2L11 13"></path>
-                        <path d="M22 2L15 22L11 13L2 9L22 2z"></path>
+                <button id="send-button" class="send-button p-2 rounded-xl bg-primary-500 hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                     </svg>
                 </button>
             </div>
         </div>
     </div>
+
+    <!-- Templates for messages -->
+    <template id="user-message-template">
+        <div class="message user flex justify-end">
+            <div class="max-w-[80%] bg-primary-500 text-white p-4 rounded-2xl rounded-tr-sm shadow-sm">
+                <p class="message-content"></p>
+            </div>
+        </div>
+    </template>
+
+    <template id="assistant-message-template">
+        <div class="message assistant flex justify-start">
+            <div class="max-w-[80%] bg-white dark:bg-gray-800 p-4 rounded-2xl rounded-tl-sm shadow-sm">
+                <p class="message-content"></p>
+            </div>
+        </div>
+    </template>
+
+    <template id="typing-indicator-template">
+        <div class="message assistant flex justify-start">
+            <div class="max-w-[80%] bg-white dark:bg-gray-800 p-4 rounded-2xl rounded-tl-sm shadow-sm">
+                <div class="typing-indicator flex space-x-2">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <script src="/static/script.js"></script>
 </body>
 </html>
